@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Clock, Folder, Play, Code } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-export default function AddProcedurePage() {
+function AddProcedureContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const database = searchParams.get('database') || 'DemoDatabase';
@@ -268,5 +268,20 @@ export default function AddProcedurePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AddProcedurePage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    }>
+      <AddProcedureContent />
+    </Suspense>
   );
 } 
