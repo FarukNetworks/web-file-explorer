@@ -115,10 +115,7 @@ const FileViewer = ({ selectedFile }) => {
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-9 rounded-md px-3 text-primary-600 hover:text-primary-700 hover:bg-primary-100 transition-all duration-200">
-              <Monitor className="h-4 w-4 mr-1" />
-              Dark
-            </button>
+
             <button
               onClick={downloadFile}
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-9 rounded-md px-3 text-primary-600 hover:text-primary-700 hover:bg-primary-100 transition-all duration-200"
