@@ -1,0 +1,144 @@
+{
+  "businessRules": [
+    {
+      "id": "BR-001",
+      "name": "Mailing Address Validation",
+      "action": "Determine if customer has a valid mailing address",
+      "category": "validation",
+      "description": "Checks if a customer has at least one address record where the AddressType is either 'Billing' or 'Shipping' and includes complete address information (non-null StreetAddress, City, PostalCode, and Country).",
+      "trigger": "During profile build when evaluating the PrimaryAddresses CTE",
+      "entities": ["Customers", "Addresses"],
+      "implementation": {
+        "sqlSnippet": "MAX(CASE WHEN a.AddressType IN ('Billing', 'Shipping') AND a.StreetAddress IS NOT NULL AND a.City IS NOT NULL AND a.PostalCode IS NOT NULL AND a.Country IS NOT NULL THEN 1 ELSE 0 END) AS HasMailingAddress",
+        "technicalDescription": "Aggregates addresses per customer and returns a flag (1 or 0) based on existence of valid mailing address details.",
+        "lineStart": 15,
+        "lineEnd": 20,
+        "technicalNotes": "Uses aggregation with grouping to ensure multiple address records are combined into a single flag."
+      },
+      "confidenceScore": 95,
+      "reasoning": "This rule ensures that the customer profile accurately reflects the presence of a valid mailing address needed for communications.",
+      "testValues": {
+        "normalCases": ["Customer with complete Billing address", "Customer with complete Shipping address"],
+        "boundaryCases": ["Customer with one field missing in address"],
+        "edgeCases": ["Customer with only Previous address records"]
+      },
+      "technicalImplications": {
+        "dataStructure": "Requires complete address fields in the Addresses table.",
+        "performance": "Grouping and CASE evaluation are lightweight given indexed foreign key on CustomerID."
+      },
+      "testableIntent": true
+    },
+    {
+      "id": "BR-002",
+      "name": "Last Interaction Date Calculation",
+      "action": "Aggregate the most recent customer activity across various sources",
+      "category": "calculation",
+      "description": "Retrieves the maximum date from customer-related activities including LoanApplications, Loans (only 'Active'), and LoanPayments. This is later used to calculate the number of days since the last interaction.",
+      "trigger": "When building the customer communications profile to determine engagement recency",
+      "entities": ["LoanApplications", "Loans", "LoanPayments"],
+      "implementation": {
+        "sqlSnippet": "SELECT CustomerID, MAX(ActivityDate) AS LastInteractionDate FROM ( ... ) AS ActivitySources GROUP BY CustomerID",
+        "technicalDescription": "Merges multiple activity sources using UNION ALL and computes the maximum date per CustomerID.",
+        "lineStart": 23,
+        "lineEnd": 33,
+        "technicalNotes": "Uses a subquery with UNION ALL to combine records from different tables."
+      },
+      "confidenceScore": 95,
+      "reasoning": "Provides a unified view of customer engagement across various interactions, which is critical for segmentation logic.",
+      "testValues": {
+        "normalCases": ["Customer with recent loan application", "Customer with active loan"],
+        "boundaryCases": ["Customer with only one source of activity"],
+        "edgeCases": ["Customer with no activity records"]
+      },
+      "technicalImplications": {
+        "dataStructure": "Relies on proper indexing on date fields in activity tables.",
+        "performance": "Subqueries and UNION may require optimization on large data sets."
+      },
+      "testableIntent": true
+    },
+    {
+      "id": "BR-003",
+      "name": "Communication Preference Evaluation",
+      "action": "Determine explicit opt-in statuses for email and postal channels",
+      "category": "data transformation",
+      "description": "Evaluates the CommunicationPreferences table to identify if a customer has explicitly opted in for Email and Postal communications.",
+      "trigger": "When consolidating customer communication preferences during profile build",
+      "entities": ["CommunicationPreferences"],
+      "implementation": {
+        "sqlSnippet": "MAX(CASE WHEN cp.Channel = 'Email' AND cp.OptInStatus = 1 THEN 1 ELSE 0 END) AS EmailOptInExplicit, MAX(CASE WHEN cp.Channel = 'Post' AND cp.OptInStatus = 1 THEN 1 ELSE 0 END) AS PostalOptInExplicit",
+        "technicalDescription": "Uses CASE expressions over grouped communication preferences to set explicit opt in flags.",
+        "lineStart": 35,
+        "lineEnd": 41,
+        "technicalNotes": "Assumes that a maximum value across records representing opt-in status is sufficient."
+      },
+      "confidenceScore": 95,
+      "reasoning": "Ensures accurate customer communication preferences are captured for targeted marketing efforts.",
+      "testValues": {
+        "normalCases": ["Customer opted in for Email only", "Customer opted in for Postal only", "Customer opted in for both"],
+        "boundaryCases": ["Customer with conflicting or duplicate records"],
+        "edgeCases": ["Customer with no preference records"]
+      },
+      "technicalImplications": {
+        "dataStructure": "Requires consistency in how CommunicationPreferences are stored.",
+        "performance": "Aggregation on customer preferences is efficient if indexed on CustomerID."
+      },
+      "testableIntent": true
+    },
+    {
+      "id": "BR-004",
+      "name": "Recent Marketing Email Open Detection",
+      "action": "Identify if a customer has opened a marketing email within a specific lookback period",
+      "category": "audit",
+      "description": "Checks the MarketingEmailsSent table for any instance of an opened email (flagged as 1) sent within the past 90 days (based on @MarketingOpenLookbackDays).",
+      "trigger": "During profile build to assess customer engagement with marketing emails",
+      "entities": ["MarketingEmailsSent"],
+      "implementation": {
+        "sqlSnippet": "WHERE mes.SentDate >= DATEADD(day, -@MarketingOpenLookbackDays, @Today)",
+        "technicalDescription": "Filters records based on the calculated date window and then aggregates the open status.",
+        "lineStart": 43,
+        "lineEnd": 49,
+        "technicalNotes": "Uses a parameterized lookback period for dynamic windows."
+      },
+      "confidenceScore": 95,
+      "reasoning": "Provides a metric for recent engagement with marketing initiatives, which is critical for segmentation and campaign targeting.",
+      "testValues": {
+        "normalCases": ["Customer who opened an email within 90 days"],
+        "boundaryCases": ["Email opened exactly 90 days ago"],
+        "edgeCases": ["Customer with no marketing email interactions"]
+      },
+      "technicalImplications": {
+        "dataStructure": "Dependent on accurate timestamp fields and parameter configuration.",
+        "performance": "Date range queries can be optimized by proper indexing on the SentDate field."
+      },
+      "testableIntent": true
+    },
+    {
+      "id": "BR-005",
+      "name": "Customer Segmentation",
+      "action": "Assign a customer segment based on activity and loan status",
+      "category": "data transformation",
+      "description": "Determines the customer segment using the following logic: if the customer has an active loan, label as 'Active Loan Holder'; if not active but has a last interaction within the past year, label as 'Recent Inactive'; if last interaction is older than a year, label as 'Long-term Inactive'; otherwise, label as 'Prospect/New'.",
+      "trigger": "After aggregating all customer data during the profile build",
+      "entities": ["Customers", "Loans", "LoanApplications", "LoanPayments"],
+      "implementation": {
+        "sqlSnippet": "CASE WHEN ISNULL(act.IsActiveCustomer, 0) = 1 THEN 'Active Loan Holder' WHEN lad.LastInteractionDate >= DATEADD(year, -1, @Today) THEN 'Recent Inactive' WHEN lad.LastInteractionDate < DATEADD(year, -1, @Today) THEN 'Long-term Inactive' ELSE 'Prospect/New' END AS CustomerSegment",
+        "technicalDescription": "Uses a CASE statement to evaluate multiple conditions using active status and last interaction dates.",
+        "lineStart": 66,
+        "lineEnd": 73,
+        "technicalNotes": "Ensures that business segmentation is dynamic based on the most recent customer data."
+      },
+      "confidenceScore": 95,
+      "reasoning": "Segmentation is vital for tailoring communication and engagement strategies according to customer activity levels.",
+      "testValues": {
+        "normalCases": ["Customer actively holding a loan", "Customer with recent activity but no active loan"],
+        "boundaryCases": ["Customer whose last interaction is exactly 365 days ago"],
+        "edgeCases": ["Customer with null last interaction date"]
+      },
+      "technicalImplications": {
+        "dataStructure": "Requires proper aggregation of previous CTE results.",
+        "performance": "CASE statement evaluations are efficient if underlying data is indexed."
+      },
+      "testableIntent": true
+    }
+  ]
+}

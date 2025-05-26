@@ -1,0 +1,134 @@
+{
+  "businessProcesses": [
+    {
+      "id": "PROC-001",
+      "name": "Build Customer Communications Profile",
+      "description": "This process builds a comprehensive profile for a customer that includes basic details, mailing address availability, last interaction date, communication preferences, marketing engagement, and customer segmentation.",
+      "orchestration": {
+        "steps": [
+          {
+            "id": "STEP-001",
+            "sequence": 1,
+            "name": "Retrieve Base Customer Information",
+            "type": "data-retrieval",
+            "description": "Fetches core customer details from the Customers table, optionally filtered by CustomerID.",
+            "businessFunctionRef": "BF-001",
+            "implementation": "Executes the BaseCustomers CTE and provides basic customer data.",
+            "inputs": ["@CustomerID"],
+            "outputs": ["CustomerID", "FirstName", "LastName", "PrimaryEmail"],
+            "controlFlow": {
+              "type": "standard",
+              "nextStep": "STEP-002"
+            }
+          },
+          {
+            "id": "STEP-002",
+            "sequence": 2,
+            "name": "Evaluate Mailing Address Presence",
+            "type": "data-retrieval",
+            "description": "Determines if the customer has a valid mailing address by inspecting related address records.",
+            "businessFunctionRef": "BF-002",
+            "implementation": "Executes the PrimaryAddresses CTE to compute the HasMailingAddress flag.",
+            "inputs": ["@CustomerID"],
+            "outputs": ["HasMailingAddress"],
+            "controlFlow": {
+              "type": "standard",
+              "nextStep": "STEP-003"
+            }
+          },
+          {
+            "id": "STEP-003",
+            "sequence": 3,
+            "name": "Aggregate Last Interaction Data",
+            "type": "calculation",
+            "description": "Consolidates activity from LoanApplications, Loans, and LoanPayments to determine the most recent interaction date.",
+            "businessFunctionRef": "BF-003",
+            "implementation": "Executes the LastActivityDates CTE using UNION ALL and aggregation.",
+            "inputs": ["@CustomerID"],
+            "outputs": ["LastInteractionDate"],
+            "controlFlow": {
+              "type": "standard",
+              "nextStep": "STEP-004"
+            }
+          },
+          {
+            "id": "STEP-004",
+            "sequence": 4,
+            "name": "Retrieve Communication Preferences",
+            "type": "data-retrieval",
+            "description": "Fetches explicit opt-in statuses for Email and Postal channels from communication preferences.",
+            "businessFunctionRef": "BF-004",
+            "implementation": "Executes the CommunicationPrefs CTE and aggregates preference flags.",
+            "inputs": ["@CustomerID"],
+            "outputs": ["EmailOptInExplicit", "PostalOptInExplicit"],
+            "controlFlow": {
+              "type": "standard",
+              "nextStep": "STEP-005"
+            }
+          },
+          {
+            "id": "STEP-005",
+            "sequence": 5,
+            "name": "Assess Recent Marketing Email Opens",
+            "type": "data-retrieval",
+            "description": "Evaluates if the customer has recently opened a marketing email based on the defined lookback period.",
+            "businessFunctionRef": "BF-005",
+            "implementation": "Executes the RecentMarketingOpens CTE filtering on SentDate using @MarketingOpenLookbackDays and @Today.",
+            "inputs": ["@CustomerID", "@MarketingOpenLookbackDays", "@Today"],
+            "outputs": ["OpenedMarketingEmailRecently"],
+            "controlFlow": {
+              "type": "standard",
+              "nextStep": "STEP-006"
+            }
+          },
+          {
+            "id": "STEP-006",
+            "sequence": 6,
+            "name": "Determine Active Loan Status",
+            "type": "data-retrieval",
+            "description": "Checks if the customer holds any active loans by evaluating loan records.",
+            "businessFunctionRef": "BF-006",
+            "implementation": "Executes the ActiveStatus CTE to derive a binary active customer flag.",
+            "inputs": ["@CustomerID"],
+            "outputs": ["IsActiveCustomer"],
+            "controlFlow": {
+              "type": "standard",
+              "nextStep": "STEP-007"
+            }
+          },
+          {
+            "id": "STEP-007",
+            "sequence": 7,
+            "name": "Calculate Days Since Last Interaction",
+            "type": "calculation",
+            "description": "Computes the number of days elapsed since the customer's most recent interaction using the current date (@Today) and LastInteractionDate.",
+            "businessFunctionRef": "BF-003",
+            "implementation": "Uses the DATEDIFF function on LastInteractionDate and @Today.",
+            "inputs": ["LastInteractionDate", "@Today"],
+            "outputs": ["DaysSinceLastInteraction"],
+            "controlFlow": {
+              "type": "standard",
+              "nextStep": "STEP-008"
+            }
+          },
+          {
+            "id": "STEP-008",
+            "sequence": 8,
+            "name": "Determine Customer Segmentation",
+            "type": "calculation",
+            "description": "Assigns a customer segment based on active loan status and recency of last interaction. Segments include 'Active Loan Holder', 'Recent Inactive', 'Long-term Inactive', and 'Prospect/New'.",
+            "businessFunctionRef": "BF-007",
+            "implementation": "Uses a CASE statement that evaluates the IsActiveCustomer flag and compares LastInteractionDate with a one-year threshold.",
+            "inputs": ["IsActiveCustomer", "LastInteractionDate", "@Today"],
+            "outputs": ["CustomerSegment"],
+            "controlFlow": {
+              "type": "terminal",
+              "terminatesExecution": true,
+              "returnsDescription": "Returns the complete customer communications profile with segmentation"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

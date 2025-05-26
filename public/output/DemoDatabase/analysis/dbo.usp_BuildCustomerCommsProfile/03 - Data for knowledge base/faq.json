@@ -1,0 +1,124 @@
+{
+  "faqs": [
+    {
+      "id": "BF-001",
+      "name": "Retrieve Base Customer Information",
+      "sqlSnippet": "WITH BaseCustomers AS (\n    SELECT\n        c.CustomerID,\n        c.FirstName,\n        c.LastName,\n        c.Email AS PrimaryEmail\n    FROM dbo.Customers c\n    WHERE (@CustomerID IS NULL OR c.CustomerID = @CustomerID)\n)",
+      "topics": [
+        {
+          "question": "What information does this function retrieve?",
+          "answer": "This function extracts core customer details, including ID, first name, last name, and primary email from the Customers table."
+        },
+        {
+          "question": "Why is the CustomerID parameter optional?",
+          "answer": "Allowing CustomerID to be optional helps the function run either for a specific customer when provided or for all customers when not specified."
+        }
+      ]
+    },
+    {
+      "id": "BF-002",
+      "name": "Evaluate Mailing Address Presence",
+      "sqlSnippet": "WITH PrimaryAddresses AS (\n    SELECT\n        a.CustomerID,\n        MAX(CASE WHEN a.AddressType IN ('Billing', 'Shipping')\n                 AND a.StreetAddress IS NOT NULL AND a.City IS NOT NULL\n                 AND a.PostalCode IS NOT NULL AND a.Country IS NOT NULL\n                 THEN 1 ELSE 0 END) AS HasMailingAddress\n    FROM dbo.Addresses a\n    WHERE (@CustomerID IS NULL OR a.CustomerID = @CustomerID)\n    GROUP BY a.CustomerID\n)",
+      "topics": [
+        {
+          "question": "What does this function check for regarding mailing addresses?",
+          "answer": "It examines a customer's addresses to determine if they have a complete mailing address based on address type and field completeness."
+        },
+        {
+          "question": "How is the address validity determined?",
+          "answer": "A valid mailing address must be of type Billing or Shipping and include non-null values for street address, city, postal code, and country."
+        }
+      ]
+    },
+    {
+      "id": "BF-003",
+      "name": "Aggregate Last Interaction Date",
+      "sqlSnippet": "WITH LastActivityDates AS (\n    SELECT\n        CustomerID,\n        MAX(ActivityDate) AS LastInteractionDate\n    FROM (\n        SELECT CustomerID, MAX(ApplicationDate) AS ActivityDate FROM dbo.LoanApplications WHERE (@CustomerID IS NULL OR CustomerID = @CustomerID) GROUP BY CustomerID\n        UNION ALL\n        SELECT CustomerID, MAX(StartDate) AS ActivityDate FROM dbo.Loans WHERE Status = 'Active' AND (@CustomerID IS NULL OR CustomerID = @CustomerID) GROUP BY CustomerID\n        UNION ALL\n        SELECT l.CustomerID, MAX(lp.PaymentDate) AS ActivityDate FROM dbo.LoanPayments lp JOIN dbo.Loans l ON lp.LoanID = l.LoanID WHERE (@CustomerID IS NULL OR l.CustomerID = @CustomerID) GROUP BY l.CustomerID\n    ) AS ActivitySources\n    GROUP BY CustomerID\n)",
+      "topics": [
+        {
+          "question": "How is the last interaction date for a customer determined?",
+          "answer": "It calculates the most recent date when the customer interacted, by aggregating activity dates from loan applications, active loans, and loan payments."
+        },
+        {
+          "question": "Why are multiple sources such as applications, loans, and payments used?",
+          "answer": "Using multiple sources ensures a comprehensive overview of the customer’s interactions to accurately reflect engagement."
+        }
+      ]
+    },
+    {
+      "id": "BF-004",
+      "name": "Fetch Communication Preferences",
+      "sqlSnippet": "WITH CommunicationPrefs AS (\n    SELECT\n        cp.CustomerID,\n        MAX(CASE WHEN cp.Channel = 'Email' AND cp.OptInStatus = 1 THEN 1 ELSE 0 END) AS EmailOptInExplicit,\n        MAX(CASE WHEN cp.Channel = 'Post' AND cp.OptInStatus = 1 THEN 1 ELSE 0 END) AS PostalOptInExplicit\n    FROM dbo.CommunicationPreferences cp\n    WHERE (@CustomerID IS NULL OR cp.CustomerID = @CustomerID)\n    GROUP BY cp.CustomerID\n)",
+      "topics": [
+        {
+          "question": "What communication preferences does this function retrieve?",
+          "answer": "It retrieves whether a customer has explicitly opted in for Email and Postal communications."
+        },
+        {
+          "question": "How are the opt-in statuses determined?",
+          "answer": "It checks the CommunicationPreferences table for flags where OptInStatus is set to 1 and converts the result into boolean values."
+        }
+      ]
+    },
+    {
+      "id": "BF-005",
+      "name": "Assess Recent Marketing Opens",
+      "sqlSnippet": "WITH RecentMarketingOpens AS (\n    SELECT\n        mes.CustomerID,\n        MAX(CAST(mes.WasOpened AS INT)) AS OpenedMarketingEmailRecently\n    FROM dbo.MarketingEmailsSent mes\n    WHERE mes.SentDate >= DATEADD(day, -@MarketingOpenLookbackDays, @Today)\n      AND (@CustomerID IS NULL OR mes.CustomerID = @CustomerID)\n    GROUP BY mes.CustomerID\n)",
+      "topics": [
+        {
+          "question": "How does the function determine if a marketing email was recently opened?",
+          "answer": "It verifies if a customer opened a marketing email within a defined period by comparing the email's sent date with the current date adjusted by a lookback period."
+        },
+        {
+          "question": "What role does the lookback period play?",
+          "answer": "The lookback period defines the timeframe (e.g., 90 days) during which email opens are considered recent engagement."
+        }
+      ]
+    },
+    {
+      "id": "BF-006",
+      "name": "Determine Active Loan Status",
+      "sqlSnippet": "WITH ActiveStatus AS (\n    SELECT\n        l.CustomerID,\n        MAX(CASE WHEN l.Status = 'Active' THEN 1 ELSE 0 END) AS IsActiveCustomer\n    FROM dbo.Loans l\n    WHERE (@CustomerID IS NULL OR l.CustomerID = @CustomerID)\n    GROUP BY l.CustomerID\n)",
+      "topics": [
+        {
+          "question": "How is the active loan status of a customer identified?",
+          "answer": "This function checks the Loans table to see if a customer has any loans with the status 'Active', indicating current borrowing activity."
+        },
+        {
+          "question": "Why is it important to know if a customer has an active loan?",
+          "answer": "Identifying active loans helps in segmenting customers for specific communications or offers based on their current loan status."
+        }
+      ]
+    },
+    {
+      "id": "BF-007",
+      "name": "Compute Customer Segmentation",
+      "sqlSnippet": "CASE\n    WHEN ISNULL(act.IsActiveCustomer, 0) = 1 THEN 'Active Loan Holder'\n    WHEN lad.LastInteractionDate >= DATEADD(year, -1, @Today) THEN 'Recent Inactive'\n    WHEN lad.LastInteractionDate < DATEADD(year, -1, @Today) THEN 'Long-term Inactive'\n    ELSE 'Prospect/New'\nEND AS CustomerSegment",
+      "topics": [
+        {
+          "question": "How is the customer segmentation determined?",
+          "answer": "Segmentation is based on whether a customer has an active loan and how recent their last interaction was. Depending on these factors, they are classified as an 'Active Loan Holder', 'Recent Inactive', 'Long-term Inactive', or 'Prospect/New'."
+        },
+        {
+          "question": "Why is segmentation important in this process?",
+          "answer": "Segmenting customers helps target communications and marketing strategies appropriately based on customer behavior and engagement."
+        }
+      ]
+    },
+    {
+      "id": "BF-008",
+      "name": "Marketing Open Lookback Configuration",
+      "sqlSnippet": "-- Configuration: @MarketingOpenLookbackDays is set to 90 days",
+      "topics": [
+        {
+          "question": "What does the Marketing Open Lookback Configuration do?",
+          "answer": "It sets the period (90 days) during which a marketing email open is considered recent, thereby impacting how engagement is measured."
+        },
+        {
+          "question": "Can the lookback period be adjusted?",
+          "answer": "Yes, the lookback period is configurable, allowing the business to update the engagement criteria as needed."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,341 @@
+{
+  "entity_framework_analysis": {
+    "related_models": [
+      {
+        "table_name": "dbo.Customers",
+        "model_file_path": "Models/Customer.cs",
+        "db_set_name": "Customers",
+        "properties": [
+          {
+            "name": "CustomerId",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "FirstName",
+            "type": "string",
+            "is_primary_key": false
+          },
+          {
+            "name": "LastName",
+            "type": "string",
+            "is_primary_key": false
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "is_primary_key": false
+          },
+          {
+            "name": "Phone",
+            "type": "string?",
+            "is_primary_key": false
+          },
+          {
+            "name": "DateRegistered",
+            "type": "DateTime",
+            "is_primary_key": false
+          }
+        ],
+        "repository_interface_path": "Repositories/Customer/ICustomerRepository.cs",
+        "repository_implementation_path": "Repositories/Customer/CustomerRepository.cs"
+      },
+      {
+        "table_name": "dbo.Loans",
+        "model_file_path": "Models/Loan.cs",
+        "db_set_name": "Loans",
+        "properties": [
+          {
+            "name": "LoanId",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "CustomerId",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "LoanApplicationId",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "LoanProductId",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "PrincipalAmount",
+            "type": "decimal",
+            "is_primary_key": false
+          },
+          {
+            "name": "InterestRate",
+            "type": "decimal",
+            "is_primary_key": false
+          },
+          {
+            "name": "TermMonths",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "MonthlyPaymentAmount",
+            "type": "decimal",
+            "is_primary_key": false
+          },
+          {
+            "name": "Status",
+            "type": "string",
+            "is_primary_key": false
+          },
+          {
+            "name": "StartDate",
+            "type": "DateOnly",
+            "is_primary_key": false
+          },
+          {
+            "name": "ExpectedEndDate",
+            "type": "DateOnly",
+            "is_primary_key": false
+          },
+          {
+            "name": "PaidOffDate",
+            "type": "DateOnly?",
+            "is_primary_key": false
+          },
+          {
+            "name": "DateCreated",
+            "type": "DateTime",
+            "is_primary_key": false
+          }
+        ],
+        "repository_interface_path": "Repositories/Loan/ILoanRepository.cs",
+        "repository_implementation_path": "Repositories/Loan/LoanRepository.cs"
+      },
+      {
+        "table_name": "dbo.LoanApplications",
+        "model_file_path": "Models/LoanApplication.cs",
+        "db_set_name": "LoanApplications",
+        "properties": [
+          {
+            "name": "LoanApplicationId",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "CustomerId",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "ProposedLoanProductId",
+            "type": "int?",
+            "is_primary_key": false
+          },
+          {
+            "name": "RequestedAmount",
+            "type": "decimal",
+            "is_primary_key": false
+          },
+          {
+            "name": "LoanPurpose",
+            "type": "string",
+            "is_primary_key": false
+          },
+          {
+            "name": "Status",
+            "type": "string",
+            "is_primary_key": false
+          },
+          {
+            "name": "ApplicationDate",
+            "type": "DateTime",
+            "is_primary_key": false
+          },
+          {
+            "name": "SubmittedDate",
+            "type": "DateTime?",
+            "is_primary_key": false
+          },
+          {
+            "name": "LastUpdatedDate",
+            "type": "DateTime?",
+            "is_primary_key": false
+          }
+        ],
+        "repository_interface_path": "Repositories/LoanApplication/ILoanApplicationRepository.cs",
+        "repository_implementation_path": "Repositories/LoanApplication/LoanApplicationRepository.cs"
+      },
+      {
+        "table_name": "dbo.LoanPayments",
+        "model_file_path": "Models/LoanPayment.cs",
+        "db_set_name": "LoanPayments",
+        "properties": [
+          {
+            "name": "LoanPaymentId",
+            "type": "long",
+            "is_primary_key": false
+          },
+          {
+            "name": "LoanId",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "PaymentDate",
+            "type": "DateTime",
+            "is_primary_key": false
+          },
+          {
+            "name": "AmountPaid",
+            "type": "decimal",
+            "is_primary_key": false
+          },
+          {
+            "name": "PaymentMethod",
+            "type": "string?",
+            "is_primary_key": false
+          },
+          {
+            "name": "TransactionId",
+            "type": "string?",
+            "is_primary_key": false
+          },
+          {
+            "name": "PrincipalComponent",
+            "type": "decimal",
+            "is_primary_key": false
+          },
+          {
+            "name": "InterestComponent",
+            "type": "decimal",
+            "is_primary_key": false
+          },
+          {
+            "name": "EscrowComponent",
+            "type": "decimal?",
+            "is_primary_key": false
+          },
+          {
+            "name": "FeeComponent",
+            "type": "decimal?",
+            "is_primary_key": false
+          },
+          {
+            "name": "Notes",
+            "type": "string?",
+            "is_primary_key": false
+          },
+          {
+            "name": "DateRecorded",
+            "type": "DateTime",
+            "is_primary_key": false
+          }
+        ],
+        "repository_interface_path": "Repositories/LoanPayment/ILoanPaymentRepository.cs",
+        "repository_implementation_path": "Repositories/LoanPayment/LoanPaymentRepository.cs"
+      },
+      {
+        "table_name": "dbo.CommunicationPreferences",
+        "model_file_path": "Models/CommunicationPreference.cs",
+        "db_set_name": "CommunicationPreferences",
+        "properties": [
+          {
+            "name": "PreferenceId",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "CustomerId",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "Channel",
+            "type": "string",
+            "is_primary_key": false
+          },
+          {
+            "name": "OptInStatus",
+            "type": "bool",
+            "is_primary_key": false
+          },
+          {
+            "name": "LastChangedDate",
+            "type": "DateTime",
+            "is_primary_key": false
+          },
+          {
+            "name": "Source",
+            "type": "string?",
+            "is_primary_key": false
+          }
+        ],
+        "repository_interface_path": "Repositories/CommunicationPreference/ICommunicationPreferenceRepository.cs",
+        "repository_implementation_path": "Repositories/CommunicationPreference/CommunicationPreferenceRepository.cs"
+      },
+      {
+        "table_name": "dbo.MarketingEmailsSent",
+        "model_file_path": "Models/MarketingEmailsSent.cs",
+        "db_set_name": "MarketingEmailsSents",
+        "properties": [
+          {
+            "name": "EmailLogId",
+            "type": "long",
+            "is_primary_key": false
+          },
+          {
+            "name": "CustomerId",
+            "type": "int",
+            "is_primary_key": false
+          },
+          {
+            "name": "SentToEmailAddress",
+            "type": "string",
+            "is_primary_key": false
+          },
+          {
+            "name": "CampaignId",
+            "type": "string",
+            "is_primary_key": false
+          },
+          {
+            "name": "SubjectLine",
+            "type": "string?",
+            "is_primary_key": false
+          },
+          {
+            "name": "SentDate",
+            "type": "DateTime",
+            "is_primary_key": false
+          },
+          {
+            "name": "WasOpened",
+            "type": "bool",
+            "is_primary_key": false
+          },
+          {
+            "name": "OpenedDate",
+            "type": "DateTime?",
+            "is_primary_key": false
+          },
+          {
+            "name": "WasClicked",
+            "type": "bool",
+            "is_primary_key": false
+          },
+          {
+            "name": "ClickedDate",
+            "type": "DateTime?",
+            "is_primary_key": false
+          }
+        ],
+        "repository_interface_path": "Repositories/MarketingEmailsSent/IMarketingEmailsSentRepository.cs",
+        "repository_implementation_path": "Repositories/MarketingEmailsSent/MarketingEmailsSentRepository.cs"
+      }
+    ],
+    "base_repository_path": "Abstractions/Repositories/Repository.cs"
+  }
+}

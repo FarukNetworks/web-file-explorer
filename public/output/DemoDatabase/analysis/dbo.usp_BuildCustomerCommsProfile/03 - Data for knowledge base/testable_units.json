@@ -1,0 +1,76 @@
+{
+  "testableUnits": [
+    {
+      "id": "TU-001",
+      "name": "Retrieve Base Customer Information",
+      "parentFunctionId": "BF-001",
+      "category": "data retrieval",
+      "coverage": {
+        "codeLines": [3, 9]
+      }
+    },
+    {
+      "id": "TU-002",
+      "name": "Evaluate Mailing Address Presence",
+      "parentFunctionId": "BF-002",
+      "category": "data transformation",
+      "coverage": {
+        "codeLines": [10, 15]
+      }
+    },
+    {
+      "id": "TU-003",
+      "name": "Aggregate Last Interaction Date",
+      "parentFunctionId": "BF-003",
+      "category": "calculation",
+      "coverage": {
+        "codeLines": [16, 30]
+      }
+    },
+    {
+      "id": "TU-004",
+      "name": "Fetch Communication Preferences",
+      "parentFunctionId": "BF-004",
+      "category": "data transformation",
+      "coverage": {
+        "codeLines": [31, 35]
+      }
+    },
+    {
+      "id": "TU-005",
+      "name": "Assess Recent Marketing Opens",
+      "parentFunctionId": "BF-005",
+      "category": "data retrieval",
+      "coverage": {
+        "codeLines": [36, 42]
+      }
+    },
+    {
+      "id": "TU-006",
+      "name": "Determine Active Loan Status",
+      "parentFunctionId": "BF-006",
+      "category": "validation",
+      "coverage": {
+        "codeLines": [43, 48]
+      }
+    },
+    {
+      "id": "TU-007",
+      "name": "Compute Customer Segmentation",
+      "parentFunctionId": "BF-007",
+      "category": "calculation",
+      "coverage": {
+        "codeLines": [49, 56]
+      }
+    },
+    {
+      "id": "TU-008",
+      "name": "Marketing Open Lookback Configuration",
+      "parentFunctionId": "BF-008",
+      "category": "configuration",
+      "coverage": {
+        "codeLines": [2, 2]
+      }
+    }
+  ]
+}

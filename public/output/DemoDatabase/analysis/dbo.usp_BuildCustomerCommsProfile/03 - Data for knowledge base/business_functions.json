@@ -1,0 +1,202 @@
+{
+  "businessFunctions": [
+    {
+      "id": "BF-001",
+      "name": "Retrieve Base Customer Information",
+      "type": "process",
+      "sqlSnippet": "WITH BaseCustomers AS (\n    SELECT\n        c.CustomerID,\n        c.FirstName,\n        c.LastName,\n        c.Email AS PrimaryEmail\n    FROM dbo.Customers c\n    WHERE (@CustomerID IS NULL OR c.CustomerID = @CustomerID)\n)",
+      "description": "Extracts basic customer details from the Customers table by optionally filtering on CustomerID.",
+      "businessPurpose": "Provides the core customer profile data needed to build the communication profile.",
+      "businessContext": "Used in profiling and segmentation, ensuring that all further calculations have a base record.",
+      "testableUnits": ["TU-001"],
+      "dataRequirements": {
+        "inputs": ["@CustomerID (optional)"],
+        "outputs": ["CustomerID", "FirstName", "LastName", "PrimaryEmail"],
+        "dependencies": ["dbo.Customers"]
+      },
+      "technicalContext": {
+        "dataTransformation": "Direct retrieval without transformation.",
+        "dynamicStructure": "Handles filtering based on provided parameter.",
+        "dataFlow": "Data flows from the Customers table into subsequent CTE operations."
+      },
+      "reusability": {
+        "usedInProcesses": ["PROC-001"],
+        "usedInSteps": ["STEP-001"]
+      }
+    },
+    {
+      "id": "BF-002",
+      "name": "Evaluate Mailing Address Presence",
+      "type": "process",
+      "sqlSnippet": "WITH PrimaryAddresses AS (\n    SELECT\n        a.CustomerID,\n        MAX(CASE WHEN a.AddressType IN ('Billing', 'Shipping')\n                 AND a.StreetAddress IS NOT NULL AND a.City IS NOT NULL\n                 AND a.PostalCode IS NOT NULL AND a.Country IS NOT NULL\n                 THEN 1 ELSE 0 END) AS HasMailingAddress\n    FROM dbo.Addresses a\n    WHERE (@CustomerID IS NULL OR a.CustomerID = @CustomerID)\n    GROUP BY a.CustomerID\n)",
+      "description": "Determines if a customer has a valid mailing address based on address type and completeness of address fields.",
+      "businessPurpose": "Ensures that customers have the necessary address information for communications and deliveries.",
+      "businessContext": "A key factor in deciding if physical communications can be sent.",
+      "testableUnits": ["TU-002"],
+      "dataRequirements": {
+        "inputs": ["@CustomerID (optional)"],
+        "outputs": ["CustomerID", "HasMailingAddress"],
+        "dependencies": ["dbo.Addresses"]
+      },
+      "technicalContext": {
+        "dataTransformation": "Transforms multiple address records into a single boolean flag.",
+        "dynamicStructure": "Groups addresses per CustomerID.",
+        "dataFlow": "Result is joined with BaseCustomers."
+      },
+      "reusability": {
+        "usedInProcesses": ["PROC-001"],
+        "usedInSteps": ["STEP-002"]
+      }
+    },
+    {
+      "id": "BF-003",
+      "name": "Aggregate Last Interaction Date",
+      "type": "process",
+      "sqlSnippet": "WITH LastActivityDates AS (\n    SELECT\n        CustomerID,\n        MAX(ActivityDate) AS LastInteractionDate\n    FROM (\n        SELECT CustomerID, MAX(ApplicationDate) AS ActivityDate FROM dbo.LoanApplications WHERE (@CustomerID IS NULL OR CustomerID = @CustomerID) GROUP BY CustomerID\n        UNION ALL\n        SELECT CustomerID, MAX(StartDate) AS ActivityDate FROM dbo.Loans WHERE Status = 'Active' AND (@CustomerID IS NULL OR CustomerID = @CustomerID) GROUP BY CustomerID\n        UNION ALL\n        SELECT l.CustomerID, MAX(lp.PaymentDate) AS ActivityDate FROM dbo.LoanPayments lp JOIN dbo.Loans l ON lp.LoanID = l.LoanID WHERE (@CustomerID IS NULL OR l.CustomerID = @CustomerID) GROUP BY l.CustomerID\n    ) AS ActivitySources\n    GROUP BY CustomerID\n)",
+      "description": "Consolidates different sources of customer activity to obtain the most recent interaction date for each customer.",
+      "businessPurpose": "Provides a single metric for customer engagement which is critical for segmentation and re-engagement campaigns.",
+      "businessContext": "Uses various interaction data (applications, loan starts, payments) to understand recency.",
+      "testableUnits": ["TU-003"],
+      "dataRequirements": {
+        "inputs": ["@CustomerID (optional)"],
+        "outputs": ["CustomerID", "LastInteractionDate"],
+        "dependencies": ["dbo.LoanApplications", "dbo.Loans", "dbo.LoanPayments"]
+      },
+      "technicalContext": {
+        "dataTransformation": "Unions multiple tables and aggregates by CustomerID.",
+        "dynamicStructure": "Combines disparate date fields into one metric.",
+        "dataFlow": "Feeds last interaction information to segmentation logic."
+      },
+      "reusability": {
+        "usedInProcesses": ["PROC-001"],
+        "usedInSteps": ["STEP-003", "STEP-007"]
+      }
+    },
+    {
+      "id": "BF-004",
+      "name": "Fetch Communication Preferences",
+      "type": "process",
+      "sqlSnippet": "WITH CommunicationPrefs AS (\n    SELECT\n        cp.CustomerID,\n        MAX(CASE WHEN cp.Channel = 'Email' AND cp.OptInStatus = 1 THEN 1 ELSE 0 END) AS EmailOptInExplicit,\n        MAX(CASE WHEN cp.Channel = 'Post' AND cp.OptInStatus = 1 THEN 1 ELSE 0 END) AS PostalOptInExplicit\n    FROM dbo.CommunicationPreferences cp\n    WHERE (@CustomerID IS NULL OR cp.CustomerID = @CustomerID)\n    GROUP BY cp.CustomerID\n)",
+      "description": "Retrieves customer communication preferences and calculates explicit opt-in statuses for both Email and Postal channels.",
+      "businessPurpose": "Determines the channels the customer has agreed to be contacted through, supporting compliance and targeting.",
+      "businessContext": "Used for regulation adherence and customer outreach.",
+      "testableUnits": ["TU-004"],
+      "dataRequirements": {
+        "inputs": ["@CustomerID (optional)"],
+        "outputs": ["CustomerID", "EmailOptInExplicit", "PostalOptInExplicit"],
+        "dependencies": ["dbo.CommunicationPreferences"]
+      },
+      "technicalContext": {
+        "dataTransformation": "Aggregates and transforms raw preference flags into boolean indicators.",
+        "dynamicStructure": "Groups results by CustomerID.",
+        "dataFlow": "Joins with base customer profile for final output."
+      },
+      "reusability": {
+        "usedInProcesses": ["PROC-001"],
+        "usedInSteps": ["STEP-004"]
+      }
+    },
+    {
+      "id": "BF-005",
+      "name": "Assess Recent Marketing Opens",
+      "type": "process",
+      "sqlSnippet": "WITH RecentMarketingOpens AS (\n    SELECT\n        mes.CustomerID,\n        MAX(CAST(mes.WasOpened AS INT)) AS OpenedMarketingEmailRecently\n    FROM dbo.MarketingEmailsSent mes\n    WHERE mes.SentDate >= DATEADD(day, -@MarketingOpenLookbackDays, @Today)\n      AND (@CustomerID IS NULL OR mes.CustomerID = @CustomerID)\n    GROUP BY mes.CustomerID\n)",
+      "description": "Evaluates marketing email campaigns to identify if the customer has engaged by opening an email within the defined lookback period.",
+      "businessPurpose": "Measures customer engagement with marketing emails which informs further outreach strategies.",
+      "businessContext": "Supports dynamic campaign targeting based on recent engagement.",
+      "testableUnits": ["TU-005"],
+      "dataRequirements": {
+        "inputs": ["@MarketingOpenLookbackDays", "@Today", "@CustomerID (optional)"],
+        "outputs": ["CustomerID", "OpenedMarketingEmailRecently"],
+        "dependencies": ["dbo.MarketingEmailsSent"]
+      },
+      "technicalContext": {
+        "dataTransformation": "Converts bit flag to an integer and aggregates by CustomerID.",
+        "dynamicStructure": "Uses date comparisons driven by parameters.",
+        "dataFlow": "Joins with main customer profile for segmentation."
+      },
+      "reusability": {
+        "usedInProcesses": ["PROC-001"],
+        "usedInSteps": ["STEP-005"]
+      }
+    },
+    {
+      "id": "BF-006",
+      "name": "Determine Active Loan Status",
+      "type": "process",
+      "sqlSnippet": "WITH ActiveStatus AS (\n    SELECT\n        l.CustomerID,\n        MAX(CASE WHEN l.Status = 'Active' THEN 1 ELSE 0 END) AS IsActiveCustomer\n    FROM dbo.Loans l\n    WHERE (@CustomerID IS NULL OR l.CustomerID = @CustomerID)\n    GROUP BY l.CustomerID\n)",
+      "description": "Checks if the customer currently holds an active loan by evaluating the status from the Loans table.",
+      "businessPurpose": "Identifies active loan holders to help segment customers for communications and market offerings.",
+      "businessContext": "Directly ties into customer segmentation and risk profiling.",
+      "testableUnits": ["TU-006"],
+      "dataRequirements": {
+        "inputs": ["@CustomerID (optional)"],
+        "outputs": ["CustomerID", "IsActiveCustomer"],
+        "dependencies": ["dbo.Loans"]
+      },
+      "technicalContext": {
+        "dataTransformation": "Evaluates a binary flag based on loan status.",
+        "dynamicStructure": "Groups by CustomerID.",
+        "dataFlow": "Joins along with other profile components."
+      },
+      "reusability": {
+        "usedInProcesses": ["PROC-001"],
+        "usedInSteps": ["STEP-006"]
+      }
+    },
+    {
+      "id": "BF-007",
+      "name": "Compute Customer Segmentation",
+      "type": "process",
+      "sqlSnippet": "CASE\n    WHEN ISNULL(act.IsActiveCustomer, 0) = 1 THEN 'Active Loan Holder'\n    WHEN lad.LastInteractionDate >= DATEADD(year, -1, @Today) THEN 'Recent Inactive'\n    WHEN lad.LastInteractionDate < DATEADD(year, -1, @Today) THEN 'Long-term Inactive'\n    ELSE 'Prospect/New'\nEND AS CustomerSegment",
+      "description": "Determines the final customer segment label based on active status and recency of interaction.",
+      "businessPurpose": "Facilitates tailored communications and marketing strategies by segmenting customers into distinct groups.",
+      "businessContext": "The segmentation is based on a combination of customer behavior and loan status analytics.",
+      "testableUnits": ["TU-007"],
+      "dataRequirements": {
+        "inputs": ["IsActiveCustomer", "LastInteractionDate", "@Today"],
+        "outputs": ["CustomerSegment"],
+        "dependencies": ["ActiveStatus (from Loans)", "LastActivityDates"]
+      },
+      "technicalContext": {
+        "dataTransformation": "Transforms numerical and date metrics into a categorical segment.",
+        "dynamicStructure": "Uses parameter-based date arithmetic.",
+        "dataFlow": "Operates on the output of previous aggregation functions to determine segmentation."
+      },
+      "reusability": {
+        "usedInProcesses": ["PROC-001"],
+        "usedInSteps": ["STEP-008"]
+      }
+    },
+    {
+      "id": "BF-008",
+      "name": "Marketing Open Lookback Configuration",
+      "type": "configuration",
+      "description": "Defines the lookback period (in days) that determines which marketing email opens are considered recent.",
+      "businessPurpose": "Allows dynamic adjustment of the period used to assess recent marketing email engagements.",
+      "businessContext": "This parameter is essential for tuning the engagement criteria based on business strategy.",
+      "parameterDetails": {
+        "name": "@MarketingOpenLookbackDays",
+        "value": "90",
+        "unit": "days",
+        "shouldExternalize": true,
+        "changeImpact": "Changing this value directly affects the recency window used in engagement metrics."
+      },
+      "testableUnits": ["TU-008"],
+      "dataRequirements": {
+        "inputs": [],
+        "outputs": ["Parameter Value"],
+        "dependencies": []
+      },
+      "technicalContext": {
+        "dataTransformation": "Affects filtering logic in marketing email retrieval.",
+        "dynamicStructure": "Parameter injection into date calculations.",
+        "dataFlow": "Passed as a variable into the CTE for marketing emails."
+      },
+      "reusability": {
+        "usedInProcesses": ["PROC-001"],
+        "usedInSteps": ["STEP-005"]
+      }
+    }
+  ]
+}

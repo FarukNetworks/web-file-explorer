@@ -1,0 +1,73 @@
+{
+  "processObjectMapping": {
+    "description": "Maps business processes and steps to the generated returnable objects along with conditions and decision points",
+    "mappings": [
+      {
+        "processId": "PROC-001",
+        "processName": "Build Customer Communications Profile",
+        "flowPaths": [
+          {
+            "pathId": "PATH-001",
+            "description": "Sequential execution from data retrieval through segmentation leading to the final returned profile",
+            "steps": [
+              "STEP-001",
+              "STEP-002",
+              "STEP-003",
+              "STEP-004",
+              "STEP-005",
+              "STEP-006",
+              "STEP-007",
+              "STEP-008"
+            ],
+            "conditionalTrigger": "No branching expected; process flows sequentially unless input filtering conditions apply",
+            "returnableObjects": [
+              {
+                "objectId": "RO-001",
+                "generatedInStep": "STEP-008",
+                "generatedByFunction": "BF-007",
+                "description": "Final customer profile with segmentation is generated after the CASE evaluation in STEP-008",
+                "notes": "This mapping ensures that the output is only produced once all necessary data has been aggregated."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "decisionPoints": [
+      {
+        "decisionId": "DP-001",
+        "description": "Determines customer segmentation based on active loan status and interaction recency",
+        "decisionVariable": "IsActiveCustomer & LastInteractionDate",
+        "implementedByFunction": "BF-007",
+        "outcomes": [
+          {
+            "value": "Active Loan Holder / Recent Inactive / Long-term Inactive / Prospect/New",
+            "resultingPath": "PATH-001",
+            "returnObjectIds": ["RO-001"]
+          }
+        ]
+      }
+    ],
+    "executionOutcomes": {
+      "description": "Outcomes of executing the stored procedure including successful profile generation",
+      "outcomes": [
+        {
+          "outcomeId": "OC-001",
+          "description": "Complete customer communications profile generated with segmentation details",
+          "conditions": ["Valid customer data provided", "Successful execution of all CTEs"],
+          "returnsData": true,
+          "returnableObjects": ["RO-001"],
+          "databaseEffects": [
+            {
+              "effect": "Read-only query execution with no updates",
+              "details": "The procedure only reads data from various tables using CTEs and performs aggregations.",
+              "relatedSideEffect": "SE-001",
+              "implementedByFunction": "Multiple (BF-001 to BF-007)"
+            }
+          ],
+          "flowPath": "PATH-001"
+        }
+      ]
+    }
+  }
+}

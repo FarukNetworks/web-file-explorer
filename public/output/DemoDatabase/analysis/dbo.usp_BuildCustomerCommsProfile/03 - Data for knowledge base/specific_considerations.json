@@ -1,0 +1,88 @@
+{
+  "specificConsiderations": {
+    "returnableObjects": [
+      {
+        "id": "RO-001",
+        "implementationApproach": "Create a CustomerCommunicationsProfileDto that aggregates data from multiple sources using LINQ projections.",
+        "conditionalLogic": "Conditional mapping for DaysSinceLastInteraction and CustomerSegment based on the presence of LastInteractionDate and active loan flags.",
+        "impact": "High"
+      }
+    ],
+    "sideEffects": [
+      {
+        "id": "SE-001",
+        "implementationApproach": "Implement audit logging for each execution of the profile build, even though the operation is read-only.",
+        "transactionHandling": "Read-only operation using EF Core; log exceptions and execution details without rollback requirements.",
+        "impact": "Medium"
+      }
+    ],
+    "decisionPoints": [
+      {
+        "id": "DP-001",
+        "implementationApproach": "Evaluate IsActiveCustomer and LastInteractionDate to decide the customer segmentation using if-else or switch-case logic in the service layer.",
+        "impact": "High"
+      }
+    ],
+    "flowPaths": [
+      {
+        "id": "PATH-001",
+        "implementationApproach": "Sequentially execute data retrieval from repositories followed by business logic in the service; if any retrieval fails, exit with an error.",
+        "impact": "High"
+      }
+    ],
+    "dataFormats": [
+      {
+        "name": "CustomerCommunicationsProfileDto Format",
+        "description": "Must include customer details, mailing address flag, communication preferences, interaction dates, and segmentation as per RO-001.",
+        "impact": "High",
+        "areas": [
+          "API response",
+          "DTO mapping"
+        ]
+      }
+    ],
+    "technicalRequirements": [
+      {
+        "name": ".NET 9 and EF Core",
+        "description": "All components must target .NET 9 with EF Core 9.0.4 ensuring compatibility with the existing project.",
+        "impact": "High",
+        "areas": [
+          "Data Access",
+          "Service Layer"
+        ]
+      }
+    ],
+    "performanceConsiderations": [
+      {
+        "name": "LINQ Query Performance",
+        "description": "Ensure that complex aggregations and joins performed via LINQ are optimized by leveraging indexes and minimizing in-memory operations.",
+        "impact": "Medium",
+        "linqOptimizations": [
+          "Use IQueryable to defer execution",
+          "Avoid loading unnecessary columns"
+        ],
+        "areas": [
+          "Repository Layer",
+          "Service Layer"
+        ]
+      }
+    ],
+    "complexSqlPatterns": [
+      {
+        "pattern": "Aggregation with CASE expressions",
+        "sqlImplementation": "Original SQL uses MAX(CASE...) to determine flags",
+        "linqImplementation": "Use GroupBy with conditional Select and Max functions in LINQ",
+        "performanceNotes": "May need careful profiling if data volumes are high",
+        "testability": "Unit test with representative data scenarios"
+      }
+    ],
+    "linqEquivalents": [
+      {
+        "sqlPattern": "UNION ALL in LastActivityDates",
+        "linqImplementation": "Concatenate multiple IQueryable sources and then apply GroupBy to determine the maximum date",
+        "performanceNotes": "Deferred execution ensures only one database call if composed correctly",
+        "testability": "Validate results with sample date records"
+      }
+    ]
+  }
+}

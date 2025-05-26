@@ -1,0 +1,30 @@
+{
+  "outOfScope": {
+    "features": [
+      {
+        "category": "User Interface Enhancements",
+        "items": [
+          {
+            "name": "Advanced client-side validation",
+            "reason": "Not required for backend migration and will be implemented in a future UI phase.",
+            "futureConsideration": true
+          }
+        ]
+      }
+    ],
+    "technicalApproaches": [
+      {
+        "name": "Direct SQL Query Execution",
+        "reason": "Avoided in favor of using EF Core with LINQ for abstraction and testability.",
+        "futureConsideration": false
+      }
+    ],
+    "implementationDetails": {
+      "documentation": {
+        "name": "Detailed Inline Code Comments",
+        "reason": "While inline documentation is provided, extended external documentation is out of scope for this migration phase.",
+        "futureConsideration": true
+      }
+    }
+  }
+}

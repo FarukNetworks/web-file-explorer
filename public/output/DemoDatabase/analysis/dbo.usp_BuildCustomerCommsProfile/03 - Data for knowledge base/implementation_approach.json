@@ -1,0 +1,352 @@
+{
+  "implementationApproach": {
+    "name": "dbo.usp_BuildCustomerCommsProfile Migration",
+    "description": "Migration from stored procedure to C# repository pattern implementation using LINQ",
+    "layers": [
+      {
+        "name": "API Layer",
+        "position": 1,
+        "components": [
+          {
+            "name": "Controller",
+            "namespace": "sql2code.Controllers",
+            "path": "Controllers/usp_BuildCustomerCommsProfile/Controller.cs",
+            "description": "Handles HTTP requests for building the customer communications profile.",
+            "mappedProcess": "PROC-001",
+            "methods": [
+              {
+                "name": "ControllerMethod",
+                "signature": "Task<IActionResult> GetProfile(int? customerId)",
+                "description": "Receives a customerId and returns the full customer communications profile (RO-001) after processing.",
+                "mappedFunction": "BF-007",
+                "enforcedRules": [
+                  "BR-001",
+                  "BR-002",
+                  "BR-003",
+                  "BR-004",
+                  "BR-005"
+                ],
+                "inputParameters": [
+                  "customerId"
+                ],
+                "returnType": "CustomerCommunicationsProfileDto",
+                "returnableObjects": [
+                  "RO-001"
+                ],
+                "returnConditions": [
+                  "Successful execution of all service steps and valid customer data"
+                ],
+                "sideEffects": [
+                  "SE-001"
+                ],
+                "testingStrategy": "Use xUnit and Moq to unit test the controller by mocking the service layer and verifying returning DTO structure."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Application Services Layer",
+        "position": 2,
+        "components": [
+          {
+            "name": "IService",
+            "namespace": "sql2code.Services",
+            "path": "Services/usp_BuildCustomerCommsProfile/IService.cs",
+            "description": "Service interface for usp_BuildCustomerCommsProfile.",
+            "methods": [
+              {
+                "name": "ServiceMethod",
+                "signature": "Task<CustomerCommunicationsProfileDto> BuildProfileAsync(int? customerId)",
+                "description": "Orchestrates the retrieval and transformation of customer data to build the communications profile."
+              }
+            ]
+          },
+          {
+            "name": "Service",
+            "namespace": "sql2code.Services",
+            "path": "Services/usp_BuildCustomerCommsProfile/Service.cs",
+            "description": "Service orchestrating business processes to build the customer communications profile.",
+            "mappedProcess": "PROC-001",
+            "decisionPoints": [
+              {
+                "id": "DP-001",
+                "implementation": "Evaluate IsActiveCustomer flag and LastInteractionDate to determine customer segmentation.",
+                "outcomes": [
+                  "Active Loan Holder",
+                  "Recent Inactive",
+                  "Long-term Inactive",
+                  "Prospect/New"
+                ]
+              }
+            ],
+            "flowPaths": [
+              {
+                "id": "PATH-001",
+                "implementation": "Sequential execution of data retrieval steps followed by segmentation logic.",
+                "conditionalLogic": "If no customer data found, return an empty profile; otherwise follow standard path."
+              }
+            ],
+            "executionOutcomes": [
+              {
+                "id": "OC-001",
+                "implementation": "After all processing steps, join the transformed data to create the final CustomerCommunicationsProfileDto.",
+                "returnableObjects": [
+                  "RO-001"
+                ]
+              }
+            ],
+            "methods": [
+              {
+                "name": "ServiceMethod",
+                "signature": "Task<CustomerCommunicationsProfileDto> BuildProfileAsync(int? customerId)",
+                "description": "Calls repositories to retrieve raw data, applies business rules using LINQ based on retrieved data, and aggregates results into the final DTO.",
+                "mappedFunction": "BF-007",
+                "enforcedRules": [
+                  "BR-001",
+                  "BR-002",
+                  "BR-003",
+                  "BR-004",
+                  "BR-005"
+                ],
+                "queryCompositionLogic": "Retrieve base data using simple repository calls then compose LINQ queries to perform joins, groupings and aggregations to mimic SQL CTEs.",
+                "businessLogicImplementation": "Apply conditional CASE logic to calculate DaysSinceLastInteraction and CustomerSegment based on IsActiveCustomer and LastInteractionDate.",
+                "testingStrategy": "Mock repository interfaces and validate decision points and transformation outcomes with unit tests using xUnit and Moq."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mappers Layer",
+        "position": 3,
+        "components": [
+          {
+            "name": "IDtoMapper",
+            "namespace": "sql2code.Mappers",
+            "path": "Mappers/usp_BuildCustomerCommsProfile/IDtoMapper.cs",
+            "description": "Mapper interface for transforming repository data into domain objects."
+          },
+          {
+            "name": "DtoMapper",
+            "namespace": "sql2code.Mappers",
+            "path": "Mappers/usp_BuildCustomerCommsProfile/DtoMapper.cs",
+            "description": "Mapper for transforming repository data into CustomerCommunicationsProfileDto.",
+            "methods": [
+              {
+                "name": "DtoMapperMethod1",
+                "signature": "CustomerCommunicationsProfileDto MapToDto(RawCustomerData data)",
+                "description": "Transforms raw data aggregated from multiple repositories into a CustomerCommunicationsProfileDto.",
+                "transformationLogic": "Maps properties from raw data objects to DTO properties including conditional logic for segmentation.",
+                "linkedSqlOperation": "SQL SELECT with multiple LEFT JOINs and CASE expressions",
+                "complexPatterns": {
+                  "hasPivot": false,
+                  "pivotImplementation": "",
+                  "otherComplexPatterns": []
+                },
+                "testingStrategy": "Unit test the mapper by providing sample raw data and asserting the expected DTO values."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Exception Handling Layer",
+        "position": 4,
+        "components": [
+          {
+            "name": "Exception Handling Service",
+            "namespace": "sql2code.Exceptions",
+            "path": "DTOs/usp_BuildCustomerCommsProfile/Exceptions/ExceptionHandlingService.cs",
+            "description": "Service for exception handling and logging errors during profile building."
+          }
+        ]
+      },
+      {
+        "name": "Domain Transfer Objects Layer",
+        "position": 5,
+        "components": [
+          {
+            "name": "CustomerCommunicationsProfileDto",
+            "namespace": "sql2code.DTOs",
+            "path": "DTOs/usp_BuildCustomerCommsProfile/CustomerCommunicationsProfileDto.cs",
+            "properties": [
+              {
+                "name": "CustomerID",
+                "type": "int",
+                "data_annotation": "[Required]"
+              },
+              {
+                "name": "FirstName",
+                "type": "string",
+                "data_annotation": "[Required]"
+              },
+              {
+                "name": "LastName",
+                "type": "string",
+                "data_annotation": "[Required]"
+              },
+              {
+                "name": "PrimaryEmail",
+                "type": "string",
+                "data_annotation": "[Required]"
+              },
+              {
+                "name": "HasMailingAddress",
+                "type": "bool",
+                "data_annotation": ""
+              },
+              {
+                "name": "EmailOptInStatus",
+                "type": "bool",
+                "data_annotation": ""
+              },
+              {
+                "name": "PostalOptInStatus",
+                "type": "bool",
+                "data_annotation": ""
+              },
+              {
+                "name": "LastInteractionDate",
+                "type": "DateTime?",
+                "data_annotation": ""
+              },
+              {
+                "name": "DaysSinceLastInteraction",
+                "type": "int?",
+                "data_annotation": ""
+              },
+              {
+                "name": "IsActiveCustomer",
+                "type": "bool",
+                "data_annotation": ""
+              },
+              {
+                "name": "OpenedMarketingEmailRecently",
+                "type": "bool",
+                "data_annotation": ""
+              },
+              {
+                "name": "CustomerSegment",
+                "type": "string",
+                "data_annotation": ""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Repositories Layer",
+        "position": 6,
+        "components": [
+          {
+            "name": "ICustomerRepository",
+            "namespace": "sql2code.Repositories.Customer",
+            "status": "Existing Interface",
+            "description": "Interface for Customer repository.",
+            "methods": []
+          },
+          {
+            "name": "CustomerRepository",
+            "namespace": "sql2code.Repositories.Customer",
+            "status": "Existing Implementation",
+            "description": "Repository for Customer entity using base repository methods.",
+            "methods": [
+              {
+                "name": "GetQueryable",
+                "status": "Existing Method",
+                "signature": "IQueryable<Customer> GetQueryable(params Expression<Func<Customer, object>>[] includeProperties)",
+                "description": "Retrieves an IQueryable for Customer allowing further LINQ composition.",
+                "testingStrategy": "Test with in-memory EF Core using Microsoft.EntityFrameworkCore.InMemory.",
+                "dataRetrievalQuery": "Returns Customers with optional includes via LINQ.",
+                "sqlEquivalent": "SELECT * FROM dbo.Customers",
+                "testSeams": [
+                  "AppDbContext"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "ILoanRepository",
+            "namespace": "sql2code.Repositories.Loan",
+            "status": "Existing Interface",
+            "description": "Interface for Loan repository.",
+            "methods": []
+          },
+          {
+            "name": "LoanRepository",
+            "namespace": "sql2code.Repositories.Loan",
+            "status": "Existing Implementation",
+            "description": "Repository for Loan entity using base repository methods.",
+            "methods": [
+              {
+                "name": "FindAsync",
+                "status": "Existing Method",
+                "signature": "Task<IEnumerable<Loan>> FindAsync(Expression<Func<Loan, bool>> predicate)",
+                "description": "Finds loans based on a predicate using LINQ.",
+                "dataRetrievalQuery": "Returns Loan entities matching the predicate.",
+                "sqlEquivalent": "SELECT * FROM dbo.Loans WHERE ...",
+                "testingStrategy": "Test using in-memory database and mock predicates.",
+                "testSeams": [
+                  "AppDbContext"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "implementationDetails": {
+      "targetFramework": ".NET 9",
+      "dataAccessStrategy": {
+        "primaryApproach": "Entity Framework Core with LINQ",
+        "linqUsage": {
+          "queryGeneration": "Use LINQ for all data access",
+          "transformations": "Use LINQ for all data transformations",
+          "projections": "Use LINQ for object projections"
+        },
+        "complexSqlPatterns": {
+          "pivotImplementation": "Not applicable as PIVOT is not used in this process",
+          "otherPatterns": [
+            "Aggregation using GroupBy and conditional selections (CASE expressions) implemented in LINQ"
+          ]
+        },
+        "transactionHandling": "Use EF Core transaction scope where needed, though the procedure is read-only.",
+        "errorHandling": "Utilize try-catch blocks and a centralized Exception Handling Service for logging and rethrowing."
+      },
+      "flowControlStrategy": {
+        "decisionPoints": "Implement decision point DP-001 within the service layer using conditional if-else constructs based on retrieved values.",
+        "conditionalFlows": "Standard sequential processing with branching for missing data.",
+        "executionOutcomes": "Final DTO (RO-001) is returned after all processing steps complete successfully."
+      },
+      "returnStrategy": {
+        "conditionalReturns": "Return CustomerCommunicationsProfileDto only when all data is aggregated; otherwise return appropriate error responses.",
+        "objectMapping": "Mapping from raw entity objects to DTO using a dedicated mapper component."
+      },
+      "sideEffectStrategy": {
+        "auditLogging": "Log execution details externally using a logging framework.",
+        "databaseModifications": "No modifications, strictly read-only.",
+        "transactionScope": "Standard EF Core read-only transaction; rollback not needed."
+      },
+      "testability": {
+        "unitTestingApproach": "Components will be unit tested using xUnit and Moq with in-memory EF Core for repository tests.",
+        "testSeams": [
+          {
+            "component": "Repository",
+            "testSeams": [
+              "ICustomerRepository",
+              "ILoanRepository"
+            ],
+            "mockingStrategy": "Inject mock implementations using Moq."
+          }
+        ],
+        "returnableObjectTesting": "DTO properties will be validated based on repository return values.",
+        "flowPathTesting": "Test various conditional branches in the service logic.",
+        "sideEffectTesting": "Verify that logging methods are called on exceptions.",
+        "dbContextTesting": "Use Microsoft.EntityFrameworkCore.InMemory for DbContext unit tests.",
+        "linqTestingApproach": "Validate LINQ queries by comparing expected and actual result sets.",
+        "testDataStrategy": "Seed in-memory databases with representative test scenarios."
+      }
+    }
+  }
+}
