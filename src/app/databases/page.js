@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { DatabaseCard } from '@/components/DatabaseCard';
 
 export default function Databases() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function Databases() {
   useEffect(() => {
     fetchDatabases();
   }, []);
+
+
 
   const fetchDatabases = async () => {
     try {
@@ -36,6 +39,32 @@ export default function Databases() {
     router.push(`/databases/${database.name}`);
   };
 
+  const handleDropDatabase = async (databaseName) => {
+    if (window.confirm(`Are you sure you want to delete the database "${databaseName}"? This action cannot be undone.`)) {
+      try {
+        const response = await fetch(`/api/databases/delete`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: databaseName }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Refresh the databases list
+          fetchDatabases();
+        } else {
+          setError(result.error || 'Failed to delete database');
+        }
+      } catch (err) {
+        setError('Failed to delete database');
+        console.error('Error deleting database:', err);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
@@ -56,8 +85,7 @@ export default function Databases() {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Database Navigator</h1>
-          <p className="text-gray-600">Welcome to your database management dashboard</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Databases</h1>
         </div>
 
         {error && (
@@ -81,34 +109,14 @@ export default function Databases() {
           {databases.length === 0 ? (
             <p className="text-gray-600">No databases found in the output folder.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {databases.map((database, index) => (
-                <div
+                <DatabaseCard
                   key={index}
-                  onClick={() => handleDatabaseClick(database)}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:shadow-md transition-all duration-200 cursor-pointer group"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                        {database.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">Database folder</p>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
+                  database={database}
+                  onDropRequest={handleDropDatabase}
+                  onOpen={handleDatabaseClick}
+                />
               ))}
             </div>
           )}
