@@ -1,18 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { MoreHorizontal, HardDrive, FileText, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { formatDate } from '@/lib/file-helpers';
 
 export function DatabaseCard({ database, onDropRequest, onOpen }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const handleDrop = (e) => {
     e.stopPropagation();
@@ -22,7 +16,27 @@ export function DatabaseCard({ database, onDropRequest, onOpen }) {
 
   const handleOpen = () => {
     onOpen(database);
+    setMenuOpen(false);
   };
+
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    setMenuOpen(!menuOpen);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Determine environment badge color
   const getBadgeVariant = (env) => {
@@ -38,38 +52,43 @@ export function DatabaseCard({ database, onDropRequest, onOpen }) {
     }
   };
 
-  // Format last accessed date
-  const lastAccessedFormatted = formatDate(database.lastAccessed);
-
   return (
     <Card className="overflow-hidden border border-primary-100 hover:shadow-lg transition-shadow">
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold">{database.name}</h2>
-            <p className="text-primary-500 text-sm">Last accessed: {lastAccessedFormatted}</p>
           </div>
           <div className="flex items-center">
             <Badge variant={getBadgeVariant(database.environment)} className="mr-2 capitalize">
               {database.environment}
             </Badge>
-            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-primary-400 hover:text-primary-600">
-                  <MoreHorizontal className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
+            <div className="relative" ref={dropdownRef}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-primary-400 hover:text-primary-600"
+                onClick={toggleMenu}
+              >
+                <MoreHorizontal className="h-5 w-5" />
+              </Button>
               {menuOpen && (
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleOpen}>
+                <div className="absolute right-0 top-full mt-1 z-50 min-w-[8rem] overflow-hidden rounded-md bg-white p-1 shadow-md transition-all duration-300">
+                  <div
+                    className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-gray-100"
+                    onClick={handleOpen}
+                  >
                     Open
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleDrop} className="text-red-600">
+                  </div>
+                  <div
+                    className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-gray-100 text-red-600"
+                    onClick={handleDrop}
+                  >
                     Drop Database
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                  </div>
+                </div>
               )}
-            </DropdownMenu>
+            </div>
           </div>
         </div>
         <div className="mt-4">

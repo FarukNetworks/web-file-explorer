@@ -92,11 +92,11 @@ export default function Sidebar({ database, isCollapsed, onToggle, onFileSelect,
       <div key={nodeId}>
         <button
           className={cn(
-            'flex items-center w-full p-1 text-sm rounded-md transition-colors',
+            'flex items-center w-full py-1.5 px-2 text-sm rounded-md transition-colors text-left',
             isDirectory
-              ? 'hover:bg-primary-100 font-medium mb-1'
-              : 'hover:bg-primary-100',
-            isSelected && !isDirectory && 'bg-primary-100'
+              ? 'hover:bg-gray-100 font-medium text-gray-700'
+              : 'hover:bg-gray-100 text-gray-600',
+            isSelected && !isDirectory && 'bg-blue-50 text-blue-700 border-l-2 border-blue-500'
           )}
           onClick={() => {
             if (isDirectory) {
@@ -110,16 +110,16 @@ export default function Sidebar({ database, isCollapsed, onToggle, onFileSelect,
           {isDirectory ? (
             <>
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4 mr-1 text-primary-500" />
+                <ChevronDown className="h-4 w-4 mr-2 text-gray-500" />
               ) : (
-                <ChevronRight className="h-4 w-4 mr-1 text-primary-500" />
+                <ChevronRight className="h-4 w-4 mr-2 text-gray-500" />
               )}
-              <FolderIcon className="h-4 w-4 mr-[.3rem] text-yellow-500" />
+              <FolderIcon className="h-4 w-4 mr-2 text-blue-500" />
             </>
           ) : (
-            <FileTypeIcon fileName={node.name} className="mr-[.3rem] w-4 h-4" />
+            <FileTypeIcon fileName={node.name} className="mr-2 w-4 h-4 ml-6" />
           )}
-          <span className="w-full overflow-hidden text-left">{node.name}</span>
+          <span className="truncate">{node.name}</span>
         </button>
 
         {isDirectory && isExpanded && node.children && (
@@ -141,50 +141,32 @@ export default function Sidebar({ database, isCollapsed, onToggle, onFileSelect,
 
   const filteredFiles = fileTree ? filterFiles(searchQuery, Array.isArray(fileTree) ? fileTree : [fileTree]) : [];
 
+  // Always show expanded sidebar
   if (isCollapsed) {
-    return (
-      <div className="w-12 bg-gray-50 border-r border-gray-200 flex flex-col">
-        <button
-          onClick={onToggle}
-          className="p-3 hover:bg-gray-100 border-b border-gray-200"
-        >
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </div>
-    );
+    // Don't render collapsed state, always show expanded
   }
 
   return (
-    <div className="w-[30%] border-r border-primary-200 bg-white overflow-y-auto h-screen">
+    <div className="w-full border-r border-gray-200 bg-white overflow-y-auto h-full flex-shrink-0">
       <div className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold text-primary-900">Files</h2>
-          <button
-            onClick={onToggle}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Files</h2>
         </div>
 
-        <div className="relative mb-4">
-          <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-primary-500" />
+        <div className="relative mb-6">
+          <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
           <Input
             placeholder="Search files..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="pl-8 h-9 text-sm w-full"
+            className="pl-10 h-10 text-sm w-full border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
-        <div className="mt-4 space-y-1">
+        <div className="space-y-0.5">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
             </div>
           ) : (
             renderFileTree(filteredFiles)

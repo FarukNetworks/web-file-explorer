@@ -8,7 +8,7 @@ export default function NewDatabase() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
-    type: 'PostgreSQL',
+    type: 'Microsoft SQL Server',
     environment: 'Development',
     connectionString: '',
     enableSSL: false,
@@ -17,7 +17,7 @@ export default function NewDatabase() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const databaseTypes = ['PostgreSQL', 'MySQL', 'SQL Server', 'Oracle', 'MongoDB'];
+  const databaseTypes = ['Microsoft SQL Server', 'PostgreSQL', 'MySQL', 'Oracle', 'MongoDB'];
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -160,9 +160,7 @@ export default function NewDatabase() {
                 placeholder="Enter connection string"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Format: postgresql://username:password@hostname:port/database
-              </p>
+
             </div>
 
             {/* Advanced Options */}

@@ -1,9 +1,11 @@
 # usp_BuildCustomerCommsProfile Process Analysis Report
 
 ## 1. Business Purpose
+
 This process builds a comprehensive profile for a customer that includes basic details, mailing address availability, last interaction date, communication preferences, marketing engagement, and customer segmentation.
 
 ## 2. Key Business Process
+
 ```mermaid
 flowchart TD
     classDef default fill:#fff,stroke:#000,color:#000
@@ -42,19 +44,19 @@ flowchart TD
 
 ### Process Steps
 
-| Step Details | Business Function Name | Business Function Description |
-|--------------|------------------------|-------------------------------|
-| **STEP-001**<br><small>Type: data-retrieval<br>Function: BF-001</small> | Retrieve Base Customer Information | Extracts basic customer details from the Customers table by optionally filtering on CustomerID. |
-| **STEP-002**<br><small>Type: data-retrieval<br>Function: BF-002</small> | Evaluate Mailing Address Presence | Determines if a customer has a valid mailing address based on address type and completeness of address fields. |
-| **STEP-003**<br><small>Type: calculation<br>Function: BF-003</small> | Aggregate Last Interaction Date | Consolidates different sources of customer activity to obtain the most recent interaction date for each customer. |
-| **STEP-004**<br><small>Type: data-retrieval<br>Function: BF-004</small> | Fetch Communication Preferences | Retrieves customer communication preferences and calculates explicit opt-in statuses for both Email and Postal channels. |
-| **STEP-005**<br><small>Type: data-retrieval<br>Function: BF-005</small> | Assess Recent Marketing Opens | Evaluates marketing email campaigns to identify if the customer has engaged by opening an email within the defined lookback period. |
-| **STEP-006**<br><small>Type: data-retrieval<br>Function: BF-006</small> | Determine Active Loan Status | Checks if the customer currently holds an active loan by evaluating the status from the Loans table. |
-| **STEP-007**<br><small>Type: calculation<br>Function: BF-003</small> | Aggregate Last Interaction Date | Consolidates different sources of customer activity to obtain the most recent interaction date for each customer. |
-| **STEP-008**<br><small>Type: calculation<br>Function: BF-007</small> | Compute Customer Segmentation | Determines the final customer segment label based on active status and recency of interaction. |
-
+| Step Details                                                            | Business Function Name             | Business Function Description                                                                                                       |
+| ----------------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **STEP-001**<br><small>Type: data-retrieval<br>Function: BF-001</small> | Retrieve Base Customer Information | Extracts basic customer details from the Customers table by optionally filtering on CustomerID.                                     |
+| **STEP-002**<br><small>Type: data-retrieval<br>Function: BF-002</small> | Evaluate Mailing Address Presence  | Determines if a customer has a valid mailing address based on address type and completeness of address fields.                      |
+| **STEP-003**<br><small>Type: calculation<br>Function: BF-003</small>    | Aggregate Last Interaction Date    | Consolidates different sources of customer activity to obtain the most recent interaction date for each customer.                   |
+| **STEP-004**<br><small>Type: data-retrieval<br>Function: BF-004</small> | Fetch Communication Preferences    | Retrieves customer communication preferences and calculates explicit opt-in statuses for both Email and Postal channels.            |
+| **STEP-005**<br><small>Type: data-retrieval<br>Function: BF-005</small> | Assess Recent Marketing Opens      | Evaluates marketing email campaigns to identify if the customer has engaged by opening an email within the defined lookback period. |
+| **STEP-006**<br><small>Type: data-retrieval<br>Function: BF-006</small> | Determine Active Loan Status       | Checks if the customer currently holds an active loan by evaluating the status from the Loans table.                                |
+| **STEP-007**<br><small>Type: calculation<br>Function: BF-003</small>    | Aggregate Last Interaction Date    | Consolidates different sources of customer activity to obtain the most recent interaction date for each customer.                   |
+| **STEP-008**<br><small>Type: calculation<br>Function: BF-007</small>    | Compute Customer Segmentation      | Determines the final customer segment label based on active status and recency of interaction.                                      |
 
 ## 3. Testable Units Overview
+
 ### TU-001: Retrieve Base Customer Information
 
 **Category:** data retrieval
@@ -79,10 +81,10 @@ WITH BaseCustomers AS (
 
 **Test Scenarios:**
 
-| ID / Type | Description | Considerations |
-|-----------|------------|---------------|
+| ID / Type                           | Description                                                                                | Considerations                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- |
 | **TS-001**<br><small>normal</small> | When normal conditions exist, retrieve base customer information should function correctly | Verify normal operation and expected outputs |
-| **TS-002**<br><small>error</small> | When error conditions exist, retrieve base customer information should handle gracefully | Test error handling and recovery mechanisms |
+| **TS-002**<br><small>error</small>  | When error conditions exist, retrieve base customer information should handle gracefully   | Test error handling and recovery mechanisms  |
 
 ---
 
@@ -112,10 +114,10 @@ WITH PrimaryAddresses AS (
 
 **Test Scenarios:**
 
-| ID / Type | Description | Considerations |
-|-----------|------------|---------------|
+| ID / Type                           | Description                                                                               | Considerations                               |
+| ----------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |
 | **TS-001**<br><small>normal</small> | When normal conditions exist, evaluate mailing address presence should function correctly | Verify normal operation and expected outputs |
-| **TS-002**<br><small>error</small> | When error conditions exist, evaluate mailing address presence should handle gracefully | Test error handling and recovery mechanisms |
+| **TS-002**<br><small>error</small>  | When error conditions exist, evaluate mailing address presence should handle gracefully   | Test error handling and recovery mechanisms  |
 
 ---
 
@@ -147,11 +149,11 @@ WITH LastActivityDates AS (
 
 **Test Scenarios:**
 
-| ID / Type | Description | Considerations |
-|-----------|------------|---------------|
+| ID / Type                           | Description                                                                                      | Considerations                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
 | **TS-001**<br><small>normal</small> | When valid inputs are provided, aggregate last interaction date should calculate correct results | Verify mathematical accuracy and proper data types |
-| **TS-002**<br><small>edge</small> | When edge case values are provided, aggregate last interaction date should handle appropriately | Test with boundary values, zero, negative numbers |
-| **TS-003**<br><small>null</small> | When NULL values are encountered, aggregate last interaction date should handle gracefully | Verify NULL handling in calculations |
+| **TS-002**<br><small>edge</small>   | When edge case values are provided, aggregate last interaction date should handle appropriately  | Test with boundary values, zero, negative numbers  |
+| **TS-003**<br><small>null</small>   | When NULL values are encountered, aggregate last interaction date should handle gracefully       | Verify NULL handling in calculations               |
 
 ---
 
@@ -179,10 +181,10 @@ WITH CommunicationPrefs AS (
 
 **Test Scenarios:**
 
-| ID / Type | Description | Considerations |
-|-----------|------------|---------------|
+| ID / Type                           | Description                                                                             | Considerations                               |
+| ----------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------- |
 | **TS-001**<br><small>normal</small> | When normal conditions exist, fetch communication preferences should function correctly | Verify normal operation and expected outputs |
-| **TS-002**<br><small>error</small> | When error conditions exist, fetch communication preferences should handle gracefully | Test error handling and recovery mechanisms |
+| **TS-002**<br><small>error</small>  | When error conditions exist, fetch communication preferences should handle gracefully   | Test error handling and recovery mechanisms  |
 
 ---
 
@@ -210,10 +212,10 @@ WITH RecentMarketingOpens AS (
 
 **Test Scenarios:**
 
-| ID / Type | Description | Considerations |
-|-----------|------------|---------------|
+| ID / Type                           | Description                                                                           | Considerations                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------- |
 | **TS-001**<br><small>normal</small> | When normal conditions exist, assess recent marketing opens should function correctly | Verify normal operation and expected outputs |
-| **TS-002**<br><small>error</small> | When error conditions exist, assess recent marketing opens should handle gracefully | Test error handling and recovery mechanisms |
+| **TS-002**<br><small>error</small>  | When error conditions exist, assess recent marketing opens should handle gracefully   | Test error handling and recovery mechanisms  |
 
 ---
 
@@ -240,11 +242,11 @@ WITH ActiveStatus AS (
 
 **Test Scenarios:**
 
-| ID / Type | Description | Considerations |
-|-----------|------------|---------------|
-| **TS-001**<br><small>normal</small> | When validation conditions are met, determine active loan status should pass validation | Verify all validation criteria are properly evaluated |
-| **TS-002**<br><small>error</small> | When validation conditions are not met, determine active loan status should fail validation | Ensure proper error handling and validation failure detection |
-| **TS-003**<br><small>null</small> | When input values are NULL, determine active loan status should handle gracefully | Test behavior with NULL inputs and edge cases |
+| ID / Type                           | Description                                                                                 | Considerations                                                |
+| ----------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **TS-001**<br><small>normal</small> | When validation conditions are met, determine active loan status should pass validation     | Verify all validation criteria are properly evaluated         |
+| **TS-002**<br><small>error</small>  | When validation conditions are not met, determine active loan status should fail validation | Ensure proper error handling and validation failure detection |
+| **TS-003**<br><small>null</small>   | When input values are NULL, determine active loan status should handle gracefully           | Test behavior with NULL inputs and edge cases                 |
 
 ---
 
@@ -269,11 +271,11 @@ END AS CustomerSegment
 
 **Test Scenarios:**
 
-| ID / Type | Description | Considerations |
-|-----------|------------|---------------|
+| ID / Type                           | Description                                                                                    | Considerations                                     |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------- |
 | **TS-001**<br><small>normal</small> | When valid inputs are provided, compute customer segmentation should calculate correct results | Verify mathematical accuracy and proper data types |
-| **TS-002**<br><small>edge</small> | When edge case values are provided, compute customer segmentation should handle appropriately | Test with boundary values, zero, negative numbers |
-| **TS-003**<br><small>null</small> | When NULL values are encountered, compute customer segmentation should handle gracefully | Verify NULL handling in calculations |
+| **TS-002**<br><small>edge</small>   | When edge case values are provided, compute customer segmentation should handle appropriately  | Test with boundary values, zero, negative numbers  |
+| **TS-003**<br><small>null</small>   | When NULL values are encountered, compute customer segmentation should handle gracefully       | Verify NULL handling in calculations               |
 
 ---
 
@@ -293,16 +295,15 @@ No SQL implementation provided
 
 **Test Scenarios:**
 
-| ID / Type | Description | Considerations |
-|-----------|------------|---------------|
+| ID / Type                           | Description                                                                                   | Considerations                               |
+| ----------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | **TS-001**<br><small>normal</small> | When normal conditions exist, marketing open lookback configuration should function correctly | Verify normal operation and expected outputs |
-| **TS-002**<br><small>error</small> | When error conditions exist, marketing open lookback configuration should handle gracefully | Test error handling and recovery mechanisms |
+| **TS-002**<br><small>error</small>  | When error conditions exist, marketing open lookback configuration should handle gracefully   | Test error handling and recovery mechanisms  |
 
 ---
 
-
-
 ## 4. Stored Procedure Source Code
+
 ```sql
 CREATE PROCEDURE usp_BuildCustomerCommsProfile (
     @CustomerID INT = NULL

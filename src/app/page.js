@@ -33,6 +33,8 @@ export default function Home() {
 
     if (!formData.email) {
       newErrors.email = 'Email is required';
+    } else if (!formData.email.endsWith('@symphony.is')) {
+      newErrors.email = 'Only symphony.is email addresses are allowed';
     }
 
     if (!formData.password) {
